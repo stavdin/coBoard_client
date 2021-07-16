@@ -87,7 +87,7 @@ public class MainScene extends Scene {
 
         });
         registerButton.setOnAction(e -> {
-
+        //test
         });
     }
 

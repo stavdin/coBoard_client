@@ -21,7 +21,7 @@ public class MainScene extends Scene {
     private LoginPage loginPage;
     private ChoosePage choosePage;
     private Pane rootPane;
-    private JoinRoom joinRoom;
+    //private JoinRoom joinRoom;
     private RoomPage roomPage;
 
     public MainScene(Pane rootPane, int width, int height) {
@@ -30,7 +30,6 @@ public class MainScene extends Scene {
         this.rootPane = rootPane;
         this.rootPane.getChildren().add(this.loginPage);
         this.choosePage = new ChoosePage();
-        this.joinRoom = new JoinRoom();
         this.roomPage = new RoomPage();
         configureActions();
 
@@ -38,8 +37,7 @@ public class MainScene extends Scene {
     }
 
 
-    private void configureActions()
-    {
+    private void configureActions() {
         setupLoginPageClicked(loginPage.getLoginButton(), loginPage.getEmailTextField(), loginPage.getPasswordField(), loginPage.getRegisterButton());
         setupCreateRoomClicked(choosePage.createRoomButton);
         setupJoinRoomClicked(choosePage.joinRoomButton);
@@ -66,6 +64,7 @@ public class MainScene extends Scene {
                 System.out.println(response.body());
                 JSONObject responeJsonObject = new JSONObject(response.body());
                 if ((boolean) responeJsonObject.get("userFound")) {
+                    roomPage.setOwner(emailField.getText());
                     rootPane.getChildren().add(choosePage);
                     rootPane.getChildren().remove(loginPage);
                 } else {
@@ -87,7 +86,7 @@ public class MainScene extends Scene {
 
         });
         registerButton.setOnAction(e -> {
-        //test
+            //test
         });
     }
 
@@ -119,20 +118,23 @@ public class MainScene extends Scene {
 
     private void setupJoinRoomClicked(Button joinButton) {
         joinButton.setOnAction((e -> {
-            TextInputDialog textInputDialog = new TextInputDialog("Please enter a room number");
+            TextInputDialog textInputDialog = new TextInputDialog();
+            textInputDialog.setHeaderText("Please enter a room number");
             Optional<String> enteredResult = textInputDialog.showAndWait();
-            enteredResult.ifPresent(string -> {
-                checkIfRoomExists(string);
+            enteredResult.ifPresent(String -> {
+                checkIfRoomExists(String);
             });
+
+
+            //roomPage.sendWaitingForChangesRequest(enteredResult.get());
             rootPane.getChildren().add(roomPage);
-            //rootPane.getChildren().add(joinRoom);
             rootPane.getChildren().remove(choosePage);
         }));
     }
 
-    private void checkIfRoomExists(String room) {
+    private void checkIfRoomExists(String roomId) {
         JSONObject jsonObj = new JSONObject();
-        jsonObj.put("roomid", room);
+        jsonObj.put("roomid", roomId);
         HttpClient client = HttpClient.newHttpClient();
         try {
             HttpRequest request = HttpRequest
@@ -151,7 +153,7 @@ public class MainScene extends Scene {
                 alert.initStyle(StageStyle.UTILITY);
                 alert.setTitle("Success");
                 alert.setHeaderText(null);
-                alert.setContentText("Success: you are now connected to room number: " + room);
+                alert.setContentText("Success: you are now connected to room number: " + roomId);
                 alert.showAndWait();
                 //go to the next room
 

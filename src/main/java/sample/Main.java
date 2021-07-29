@@ -42,18 +42,11 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws URISyntaxException, IOException, InterruptedException {
         primaryStage.setTitle("Co - board");
-        final boolean resizable = primaryStage.isResizable();
-        primaryStage.setResizable(!resizable);
-        primaryStage.setResizable(resizable);
-        MainScene scene = new MainScene(new Pane(), 800, 500);
+        MainScene scene = new MainScene(new Pane(), 300,300);
         primaryStage.setScene(scene);
         primaryStage.show();
 
-
-
     }
-
-    ;
 
 
     public static void main(String[] args) throws URISyntaxException, IOException, InterruptedException {

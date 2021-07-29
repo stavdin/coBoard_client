@@ -33,6 +33,8 @@ public class LoginPage extends GridPane {
         this.setAlignment(Pos.CENTER);
         this.setHgap(10);
         this.setVgap(10);
+//        this.setMinSize(300,300);
+//        this.setMaxSize(300,300);
         this.setPadding(new Insets(25, 25, 25, 25));
         Text text = new Text("Login");
         text.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));

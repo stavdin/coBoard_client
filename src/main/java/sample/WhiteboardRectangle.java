@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.awt.*;
@@ -21,6 +22,18 @@ public class WhiteboardRectangle extends Rectangle implements WhiteboardShape{
         setY(firstPoint.getY());
         setHeight(y - this.getY());
         setWidth(x - this.getX());
+    }
+
+    @Override
+    public void whiteboardSetStroke(Color c)
+    {
+        this.setStroke(c);
+    }
+
+    @Override
+    public void whiteboardSetFill(Color c)
+    {
+        this.setFill(c);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Ellipse;
 
@@ -31,6 +32,12 @@ public class WhiteboardCircle extends Ellipse implements WhiteboardShape {
     }
 
     @Override
+    public void whiteboardSetFill(Color c)
+    {
+        this.setFill(c);
+    }
+
+    @Override
     public Point getFirstPoint() {
         return first;
     }
@@ -40,6 +47,11 @@ public class WhiteboardCircle extends Ellipse implements WhiteboardShape {
         return second;
     }
 
+    @Override
+    public void whiteboardSetStroke(Color c)
+    {
+        this.setStroke(c);
+    }
     @Override
     public int getShapeOrder() {
         return order;

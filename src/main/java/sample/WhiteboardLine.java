@@ -1,5 +1,6 @@
 package sample;
 
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 
 import java.awt.*;
@@ -24,6 +25,17 @@ class WhiteboardLine extends Line implements WhiteboardShape {
 
 
 
+    }
+
+    @Override
+    public void whiteboardSetFill(Color c)
+    {
+        this.setFill(c);
+    }
+    @Override
+    public void whiteboardSetStroke(Color c)
+    {
+        this.setStroke(c);
     }
 
     @Override

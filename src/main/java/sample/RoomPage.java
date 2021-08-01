@@ -43,9 +43,7 @@ public class RoomPage extends GridPane {
     public MenuButton chooseColor;
     public TextField text;
     private ColorPicker colorPicker;
-    private Color selectedColor;
     private String chosenShape = "";
-    private boolean fillShape;
     private Point firstPoint;
     private Pane whiteBoard;
     private GridPane toolBar;
@@ -56,8 +54,9 @@ public class RoomPage extends GridPane {
     private ArrayList<WhiteboardShape> shapeList;
     private int shapeToken = 1;
     private int syncpoint = 0;
+    private String roomId;
     private String owner;
-    private CheckBox fillColor;
+    private CheckBox fillShape;
 
     public RoomPage() {
         this.setPadding(new Insets(25, 25, 25, 25));
@@ -78,7 +77,6 @@ public class RoomPage extends GridPane {
         configureFillButton();
         configureWhiteBoard();
 
-
         shapeList = new ArrayList<WhiteboardShape>();
 
         text = new TextField();
@@ -95,10 +93,9 @@ public class RoomPage extends GridPane {
     }
 
     private void configureFillButton() {
-        fillColor = new CheckBox("fill shape");
-        toolBar.add(fillColor, 7, 0);
+        fillShape = new CheckBox("fill shape");
+        toolBar.add(fillShape, 7, 0);
     }
-
 
     private void configureUndoAndRedo() {
         undo = new Button("undo");
@@ -115,6 +112,7 @@ public class RoomPage extends GridPane {
             @Override
             public void handle(ActionEvent actionEvent) {
                 chosenShape = "Rectangle";
+                //make sure the size of the button doesn't change
                 chooseShape.setText("Rectangle");
             }
         });
@@ -146,20 +144,15 @@ public class RoomPage extends GridPane {
     private void configureChooseColor() {
         colorPicker = new ColorPicker();
         toolBar.add(colorPicker, 8, 0);
-        colorPicker.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                Color c = colorPicker.getValue();
-            }
-        });
     }
 
 
     private void configureWhiteBoard() {
+
         whiteBoard = new Pane();
+        whiteBoard.setMaxSize(600,600);
+        whiteBoard.setMinSize(600,600);
         //set size
-        whiteBoard.setMaxSize(700, 700);
-        whiteBoard.setMinSize(700, 700);
         // create a background fill
         BackgroundFill background_fill = new BackgroundFill(Color.WHITE,
                 CornerRadii.EMPTY, Insets.EMPTY);
@@ -175,22 +168,17 @@ public class RoomPage extends GridPane {
                 firstPoint.setLocation(mouseEvent.getX(), mouseEvent.getY());
                 switch (chosenShape) {
                     case "Rectangle":
-                        newShapeRectangle = new WhiteboardRectangle();
                         newShape = new WhiteboardRectangle();
                         break;
                     case "Circle":
-                        newShapeCircle = new WhiteboardCircle();
                         newShape = new WhiteboardCircle();
                         break;
                     case "Line":
-                        newShapeLine = new WhiteboardLine();
                         newShape = new WhiteboardLine();
-
                         break;
                     default:
                         throw new RuntimeException("Unrecognized shape.");
                 }
-
             }
         });
 
@@ -200,15 +188,7 @@ public class RoomPage extends GridPane {
             public void handle(MouseEvent mouseEvent) {
                 //draw shape using current mouse event and first point without sending anything to db
                 if (whiteBoard.getLayoutBounds().contains(mouseEvent.getX(), mouseEvent.getY())) {
-                    if (chosenShape == "Rectangle") {
-                        drawShapeRectangle(newShapeRectangle, mouseEvent.getX(), mouseEvent.getY());
-                    } else if (chosenShape == "Circle") {
-                        drawShapeCircle(newShapeCircle, mouseEvent.getX(), mouseEvent.getY());
-                    } else {
-                        drawShapeLine(newShapeLine, mouseEvent.getX(), mouseEvent.getY());
-                    }
-                    updateNewShape(newShape, mouseEvent.getX(), mouseEvent.getY());
-
+                    drawShape(newShape, mouseEvent.getX(), mouseEvent.getY());
                 }
             }
         });
@@ -217,14 +197,7 @@ public class RoomPage extends GridPane {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 if (whiteBoard.getLayoutBounds().contains(mouseEvent.getX(), mouseEvent.getY())) {
-                    if (chosenShape == "Rectangle") {
-                        drawShapeRectangle(newShapeRectangle, mouseEvent.getX(), mouseEvent.getY());
-                    } else if (chosenShape == "Circle") {
-                        drawShapeCircle(newShapeCircle, mouseEvent.getX(), mouseEvent.getY());
-                    } else {
-                        drawShapeLine(newShapeLine, mouseEvent.getX(), mouseEvent.getY());
-                    }
-                    updateNewShape(newShape, mouseEvent.getX(), mouseEvent.getY());
+                    drawShape(newShape, mouseEvent.getX(), mouseEvent.getY());
                 }
                 sendCreateShapeRequestAndUpdateShapeList(newShape);
                 newShape = null;
@@ -233,6 +206,44 @@ public class RoomPage extends GridPane {
         });
         this.add(whiteBoard, 0, 1);
 
+    }
+
+    private void drawShape(WhiteboardShape shape, double x, double y) {
+        shape.setParameters(firstPoint, x, y, shapeToken);
+        var children = whiteBoard.getChildren();
+        if (!children.contains(shape)) {
+            // we need to make sure that every shape we use implements this:
+            // javafx.scene.shape.Shape
+            if(!fillShape.isSelected())
+            {
+                shape.whiteboardSetStroke(colorPicker.getValue());
+                shape.whiteboardSetFill(Color.WHITE);
+            }
+            else
+                {
+                    shape.whiteboardSetStroke(colorPicker.getValue());
+                    shape.whiteboardSetFill(colorPicker.getValue());
+                }
+            children.add((Shape) shape);
+        }
+    }
+
+
+    private void drawShapeRectangle(WhiteboardRectangle shape, double x, double y) {
+        shape.setParameters(firstPoint, x, y, shapeToken);
+        var children = whiteBoard.getChildren();
+        if (!children.contains(shape)) {
+            // we need to make sure that every shape we use implements this:
+            // javafx.scene.shape.Shape
+            if (fillShape.isSelected()) {
+                Color c = colorPicker.getValue();
+                shape.setFill(c);
+            } else {
+                shape.setFill(Color.WHITE);
+
+            }
+            children.add((Shape) shape);
+        }
     }
 
     private void sendCreateShapeRequestAndUpdateShapeList(WhiteboardShape shape) {
@@ -244,6 +255,7 @@ public class RoomPage extends GridPane {
         jsonObj.put("secondPointX", shape.getSecondPoint().getX());
         jsonObj.put("secondPointY", shape.getSecondPoint().getY());
         jsonObj.put("shapeToken", shapeToken);
+        jsonObj.put("roomId", roomId);
 
         // TODO change servlet string
 
@@ -261,7 +273,7 @@ public class RoomPage extends GridPane {
             System.out.println(response.body());
             JSONObject responseJsonObject = new JSONObject(response.body());
             if ((boolean) responseJsonObject.get("shapeAdded")) {
-                shapeToken++;
+                shapeToken ++;
                 shapeList.add(shape);
             } else {
                 //TODO handle add shape failed by throwing the correct exception.
@@ -280,62 +292,6 @@ public class RoomPage extends GridPane {
     public void setOwner(String owner) {
         this.owner = owner;
     }
-
-    private void updateNewShape(WhiteboardShape shape, double x, double y) {
-        shape.setParameters(firstPoint, x, y, shapeToken);
-    }
-
-    private void drawShapeRectangle(WhiteboardRectangle shape, double x, double y) {
-        shape.setParameters(firstPoint, x, y, shapeToken);
-        var children = whiteBoard.getChildren();
-        if (!children.contains(shape)) {
-            // we need to make sure that every shape we use implements this:
-            // javafx.scene.shape.Shape
-            if (fillColor.isSelected()) {
-                Color c = colorPicker.getValue();
-                shape.setFill(c);
-            } else {
-                shape.setFill(Color.WHITE);
-                shape.setStroke(Color.BLACK);
-
-            }
-            children.add((Shape) shape);
-        }
-    }
-
-    private void drawShapeCircle(WhiteboardCircle shape, double x, double y) {
-        shape.setParameters(firstPoint, x, y, shapeToken);
-        var children = whiteBoard.getChildren();
-        if (!children.contains(shape)) {
-            // we need to make sure that every shape we use implements this:
-            // javafx.scene.shape.Shape
-            if (fillColor.isSelected()) {
-                Color c = colorPicker.getValue();
-                shape.setFill(c);
-            } else {
-                shape.setStroke(Color.BLACK);
-                shape.setFill(Color.WHITE);
-            }
-            children.add((Shape) shape);
-        }
-    }
-
-    private void drawShapeLine(WhiteboardLine shape, double x, double y) {
-        shape.setParameters(firstPoint, x, y, shapeToken);
-        var children = whiteBoard.getChildren();
-        if (!children.contains(shape)) {
-            // we need to make sure that every shape we use implements this:
-            // javafx.scene.shape.Shape
-            if (fillColor.isSelected()) {
-                Color c = colorPicker.getValue();
-                shape.setStroke(c);
-            } else {
-                shape.setFill(Color.WHITE);
-            }
-            children.add((Shape) shape);
-        }
-    }
-
 
     public void sendWaitingForChangesRequest(String roomId) {
         //add room id to the request body
@@ -401,19 +357,46 @@ public class RoomPage extends GridPane {
 //            drawShape();
         }
     }
+
+    public void setRoomId(String roomId)
+    {
+        this.roomId = roomId;
+    }
 }
 //---------------------------------------------------------------------
 // TODO the whiteboard in room page should be bigger, we need to set its maximum size to be the same as its minimum size,
-//  TODO fix -  circle shape gets out of the whiteBoard
+// TODO fix -  circle shape gets out of the whiteBoard
+// TODO give whiteboard a black/gray border
+
 
 //-----------------------------------------------------------------
 
-// TODO : think about how to implement long polling - do we recursively send a waitforchanges request to the server? new thread?
-// TODO DB changes page
 // TODO we need to add text box shape
+//  TODO : add button "clear" to roomPage
 // TODO: (this is probably hard) think about adding a free draw option - like paint
-// TODO give whiteboard a black/gray border
 
 //-----------------------------------------------------------------
 // TODO register button
 // todo add text box;
+
+
+//TODO STAV:
+// 1. set buttons to be fixed size: if it is possible to set size and have the chosen shape diplayed on the button at the same time - great. if not, dont display chosen shape on button.
+// 2. sizes - find a way to have the room page be in a different size than the other pages.
+//    login/join room/etc should be small. roompage should be big.
+//    also, make it so that the roomPage (pane/panel/whatever) cannot change its size - we want it to be fixed.
+// 3. put a border on whiteboard. put border on buttons panel.
+// 4. circle change implementation: the center of the circle is the middle point between the first and second click,
+//    this way we can easily calculate the radius and we will not draw over the whiteboard.
+// 5. change colorpicker default color to black
+// 6. user registration
+
+//TODO AMIT:
+// 1. finish method draw returned shapes in room page. ensure that the shapes are being drawn when user exits and re opens the room.
+// 2. ensure join a room and create a room both funciton correctly e.g: check 1. above applies when joining a room
+// 3. finish handling long polling - try https://docs.oracle.com/javafx/2/threads/jfxpub-threads.htm example 5
+// 4. preparation for redu/undo : add table NonDisplayedShapes in db
+// 5. redo and undo - make servlets, ensure shapes are moved from one table to the other...
+// 6. add free draw option on panel
+// 7. add textbox shape
+// 8. add delete shape - think of implementation

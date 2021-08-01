@@ -21,7 +21,6 @@ public class MainScene extends Scene {
     private LoginPage loginPage;
     private ChoosePage choosePage;
     private Pane rootPane;
-    //private JoinRoom joinRoom;
     private RoomPage roomPage;
 
     public MainScene(Pane rootPane, int width, int height) {
@@ -103,6 +102,11 @@ public class MainScene extends Scene {
                 HttpResponse<String> responseFromServer = httpResponseCompletableFuture.get();
                 System.out.println(responseFromServer);
                 System.out.println(responseFromServer.body());
+                JSONObject responseJson = new JSONObject(responseFromServer.body());
+                String roomId = (String) responseJson.get("roomId");
+                roomPage.setRoomId(roomId);
+                rootPane.getChildren().add(roomPage);
+                rootPane.getChildren().remove(choosePage);
             } catch (InterruptedException interruptedException) {
                 interruptedException.printStackTrace();
             } catch (ExecutionException executionException) {
@@ -110,8 +114,6 @@ public class MainScene extends Scene {
             } catch (URISyntaxException uriSyntaxException) {
                 uriSyntaxException.printStackTrace();
             }
-            rootPane.getChildren().add(roomPage);
-            rootPane.getChildren().remove(choosePage);
         });
 
     }
@@ -122,17 +124,14 @@ public class MainScene extends Scene {
             textInputDialog.setHeaderText("Please enter a room number");
             Optional<String> enteredResult = textInputDialog.showAndWait();
             enteredResult.ifPresent(String -> {
-                checkIfRoomExists(String);
+                redirectRoom(String);
             });
 
 
-            //roomPage.sendWaitingForChangesRequest(enteredResult.get());
-            rootPane.getChildren().add(roomPage);
-            rootPane.getChildren().remove(choosePage);
         }));
     }
 
-    private void checkIfRoomExists(String roomId) {
+    private void redirectRoom(String roomId) {
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("roomid", roomId);
         HttpClient client = HttpClient.newHttpClient();
@@ -146,9 +145,14 @@ public class MainScene extends Scene {
             HttpResponse<String> response = httpResponseCompletableFuture.get();
             System.out.println(response);
             System.out.println(response.body());
-            JSONObject a = new JSONObject(response.body());
-            boolean roomNumberFound = (boolean) a.get("roomNumberFound");
+            JSONObject responseFromServer = new JSONObject(response.body());
+            boolean roomNumberFound = (boolean) responseFromServer.get("roomNumberFound");
             if (roomNumberFound) {
+                roomPage.setRoomId(roomId);
+                rootPane.getChildren().add(roomPage);
+                rootPane.getChildren().remove(choosePage);
+                //roomPage.sendWaitingForChangesRequest(enteredResult.get());
+
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.initStyle(StageStyle.UTILITY);
                 alert.setTitle("Success");

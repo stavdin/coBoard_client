@@ -42,8 +42,12 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws URISyntaxException, IOException, InterruptedException {
         primaryStage.setTitle("Co - board");
-        MainScene scene = new MainScene(new Pane(), 300,300);
+        MainScene scene = new MainScene(new Pane(), 800,800);
         primaryStage.setScene(scene);
+//        primaryStage.setMinHeight(800);
+//        primaryStage.setMinWidth(800);
+//        primaryStage.setMaxHeight(800);
+//        primaryStage.setMaxWidth(800);
         primaryStage.show();
 
     }

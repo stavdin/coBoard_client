@@ -2,7 +2,10 @@ package sample;
 
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.json.JSONObject;
 
@@ -14,7 +17,7 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
+
 
 public class MainScene extends Scene {
 
@@ -22,6 +25,8 @@ public class MainScene extends Scene {
     private ChoosePage choosePage;
     private Pane rootPane;
     private RoomPage roomPage;
+    private Stage primaryStage;
+   // private RegisterPage registerPage;
 
     public MainScene(Pane rootPane, int width, int height) {
         super(rootPane, width, height);
@@ -30,6 +35,7 @@ public class MainScene extends Scene {
         this.rootPane.getChildren().add(this.loginPage);
         this.choosePage = new ChoosePage();
         this.roomPage = new RoomPage();
+       // this.registerPage = new RegisterPage();
         configureActions();
 
 
@@ -40,6 +46,7 @@ public class MainScene extends Scene {
         setupLoginPageClicked(loginPage.getLoginButton(), loginPage.getEmailTextField(), loginPage.getPasswordField(), loginPage.getRegisterButton());
         setupCreateRoomClicked(choosePage.createRoomButton);
         setupJoinRoomClicked(choosePage.joinRoomButton);
+     //   setUpRegisterButtonClicked(registerPage.registerButton);
     }
 
     private void setupLoginPageClicked(Button loginButton, TextField emailField, PasswordField passwordField, Button registerButton) {
@@ -107,6 +114,7 @@ public class MainScene extends Scene {
                 roomPage.setRoomId(roomId);
                 rootPane.getChildren().add(roomPage);
                 rootPane.getChildren().remove(choosePage);
+                roomPage.waitForChanges(roomId);
             } catch (InterruptedException interruptedException) {
                 interruptedException.printStackTrace();
             } catch (ExecutionException executionException) {
@@ -118,15 +126,20 @@ public class MainScene extends Scene {
 
     }
 
+//    private void setUpRegisterButtonClicked(Button registerButton) {
+//        registerButton.setOnAction(e -> {
+//        });
+//
+//    }
+
     private void setupJoinRoomClicked(Button joinButton) {
         joinButton.setOnAction((e -> {
             TextInputDialog textInputDialog = new TextInputDialog();
-            textInputDialog.setHeaderText("Please enter a room number");
+            textInputDialog.setHeaderText("Please enter a RoomId");
             Optional<String> enteredResult = textInputDialog.showAndWait();
             enteredResult.ifPresent(String -> {
                 redirectRoom(String);
             });
-
 
         }));
     }
@@ -151,7 +164,9 @@ public class MainScene extends Scene {
                 roomPage.setRoomId(roomId);
                 rootPane.getChildren().add(roomPage);
                 rootPane.getChildren().remove(choosePage);
-                //roomPage.sendWaitingForChangesRequest(enteredResult.get());
+                roomPage.waitForChanges(roomId);
+
+
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.initStyle(StageStyle.UTILITY);
@@ -168,6 +183,7 @@ public class MainScene extends Scene {
                 alert.setHeaderText(null);
                 alert.setContentText("Error: Room number does not exists");
                 alert.showAndWait();
+
             }
         } catch (InterruptedException interruptedException) {
             interruptedException.printStackTrace();

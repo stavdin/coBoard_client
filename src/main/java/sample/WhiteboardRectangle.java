@@ -5,18 +5,16 @@ import javafx.scene.shape.Rectangle;
 
 import java.awt.*;
 
-public class WhiteboardRectangle extends Rectangle implements WhiteboardShape{
+public class WhiteboardRectangle extends Rectangle implements WhiteboardShape {
 
     private Point first;
     private Point second;
-    private int order;
 
     @Override
-    public void setParameters(Point firstPoint, double x, double y, int order) {
+    public void setParameters(Point firstPoint, double x, double y) {
         first = new Point(firstPoint.getLocation());
         second = new Point();
-        second.setLocation(x,y);
-        this.order = order;
+        second.setLocation(x, y);
 
         setX(firstPoint.getX());
         setY(firstPoint.getY());
@@ -25,14 +23,12 @@ public class WhiteboardRectangle extends Rectangle implements WhiteboardShape{
     }
 
     @Override
-    public void whiteboardSetStroke(Color c)
-    {
+    public void whiteboardSetStroke(Color c) {
         this.setStroke(c);
     }
 
     @Override
-    public void whiteboardSetFill(Color c)
-    {
+    public void whiteboardSetFill(Color c) {
         this.setFill(c);
     }
 
@@ -46,8 +42,4 @@ public class WhiteboardRectangle extends Rectangle implements WhiteboardShape{
         return second;
     }
 
-    @Override
-    public int getShapeOrder() {
-        return order;
-    }
 }

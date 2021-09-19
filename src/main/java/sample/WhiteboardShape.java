@@ -7,13 +7,13 @@ import javafx.scene.shape.Shape;
 import java.awt.*;
 
 public interface WhiteboardShape {
-    public void setParameters(Point firstPoint, double x, double y, int order);
+    public void setParameters(Point firstPoint, double x, double y);
 
     public Point getFirstPoint();
 
     public Point getSecondPoint();
 
     public void whiteboardSetStroke(Color c);
+
     public void whiteboardSetFill(Color c);
-    public int getShapeOrder();
 }

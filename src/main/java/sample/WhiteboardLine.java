@@ -9,14 +9,12 @@ class WhiteboardLine extends Line implements WhiteboardShape {
 
     private Point first;
     private Point second;
-    private int order;
 
     @Override
-    public void setParameters(Point firstPoint, double x, double y, int order) {
+    public void setParameters(Point firstPoint, double x, double y) {
         first = new Point(firstPoint.getLocation());
         second = new Point();
         second.setLocation(x, y);
-        this.order = order;
 
         setStartX(firstPoint.getX());
         setStartY(firstPoint.getY());
@@ -24,17 +22,15 @@ class WhiteboardLine extends Line implements WhiteboardShape {
         setEndY(second.getY());
 
 
-
     }
 
     @Override
-    public void whiteboardSetFill(Color c)
-    {
+    public void whiteboardSetFill(Color c) {
         this.setFill(c);
     }
+
     @Override
-    public void whiteboardSetStroke(Color c)
-    {
+    public void whiteboardSetStroke(Color c) {
         this.setStroke(c);
     }
 
@@ -48,10 +44,6 @@ class WhiteboardLine extends Line implements WhiteboardShape {
         return second;
     }
 
-    @Override
-    public int getShapeOrder() {
-        return order;
-    }
 }
 
 

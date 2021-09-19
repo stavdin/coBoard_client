@@ -2,38 +2,40 @@ package sample;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Ellipse;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 
-public class WhiteboardCircle extends Ellipse implements WhiteboardShape {
+
+public class WhiteboardCircle extends Circle implements WhiteboardShape {
     private Point first;
     private Point second;
-    private int order;
-    private double distance;
 
     @Override
-    public void setParameters(Point firstPoint, double x, double y, int order) {
+    public void setParameters(Point firstPoint, double x, double y) {
         first = new Point(firstPoint.getLocation());
         second = new Point();
         second.setLocation(x, y);
-        this.order = order;
 
-        setCenterX(firstPoint.getX());
-        setCenterY(first.getY());
+        setCenterX((firstPoint.getX() + second.getX()) / 2);
+        setCenterY((firstPoint.getY() + second.getY()) / 2);
 
+        Double radius = Math.sqrt(Math.pow(firstPoint.getX() - getCenterX(), 2) + Math.pow(firstPoint.getY() - getCenterY(), 2));
+        if (getCenterX() + radius <= 600 && getCenterY() + radius <= 600 && (getCenterX() - radius) >= 0) {
+            setRadius(radius);
+        } else {
+            if (getCenterX() + radius > 600) {
+                setRadius(radius - (getCenterX() + radius - 600));
+            }
+            if (getCenterY() + radius > 600) {
+               // setRadius(radius - (getCenterY() + radius - 600));
 
-        setRadiusX(Point2D.distance(firstPoint.getX(),firstPoint.getY(),second.getX(),second.getY()));
-        setRadiusY(Point2D.distance(firstPoint.getX(),firstPoint.getY(),second.getX(),second.getY()));
-
-
+            }
+        }
 
     }
 
     @Override
-    public void whiteboardSetFill(Color c)
-    {
+    public void whiteboardSetFill(Color c) {
         this.setFill(c);
     }
 
@@ -48,12 +50,8 @@ public class WhiteboardCircle extends Ellipse implements WhiteboardShape {
     }
 
     @Override
-    public void whiteboardSetStroke(Color c)
-    {
+    public void whiteboardSetStroke(Color c) {
         this.setStroke(c);
     }
-    @Override
-    public int getShapeOrder() {
-        return order;
-    }
+
 }

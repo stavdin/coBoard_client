@@ -13,41 +13,38 @@ import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-public class ShapeRetrieverService extends Service<JSONArray> {
+public class MessageRetrieverService extends Service<String> {
 
-    private int syncPoint = 0;
     private String roomId;
-    public boolean isUndoOrRedo = false;
+    private int syncPoint = 0;
 
-    public ShapeRetrieverService(String roomId) {
+    public MessageRetrieverService(String roomId) {
         this.roomId = roomId;
     }
 
-    protected Task<JSONArray> createTask() {
-        return new Task<JSONArray>() {
-            protected JSONArray call() throws Exception {
-                return sendWaitingForChangesRequest(roomId);
+    protected Task<String> createTask() {
+        return new Task<String>() {
+            protected String call() throws Exception {
+                return sendWaitingForMessagesRequest(roomId);
             }
         };
     }
 
-    public JSONArray sendWaitingForChangesRequest(String roomId) throws Exception {
+    public String sendWaitingForMessagesRequest(String roomId) throws Exception {
         //add room id to the request body
         HttpClient client = HttpClient.newHttpClient();
         try {
             HttpRequest request = HttpRequest
                     .newBuilder()
                     .GET()
-                    .uri(new URI("http://localhost:8081/waitForChanges?roomId=" + roomId + "&syncPoint=" + this.syncPoint))
+                    .uri(new URI("http://localhost:8081/waitForMessage?roomId=" + roomId + "&syncPoint=" + this.syncPoint))
                     .build();
             CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             HttpResponse<String> responseFromServer = httpResponseCompletableFuture.get();
-            JSONObject changes = new JSONObject(responseFromServer.body());
-            var newSyncpoint = changes.getInt("newSyncpoint");
-            this.isUndoOrRedo = changes.getBoolean("isUndoOrRedo");
-
-            syncPoint = changes.getInt("newSyncpoint");
-            return changes.getJSONArray("shapesToDisplay");
+            JSONObject response = new JSONObject(responseFromServer.body());
+            var message = response.getString("message");
+            this.syncPoint = response.getInt("newSyncpoint");
+            return message;
         } catch (InterruptedException interruptedException) {
             interruptedException.printStackTrace();
             throw interruptedException;

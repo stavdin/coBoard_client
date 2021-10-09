@@ -2,10 +2,7 @@ package sample;
 
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.json.JSONObject;
 
@@ -25,8 +22,7 @@ public class MainScene extends Scene {
     private ChoosePage choosePage;
     private Pane rootPane;
     private RoomPage roomPage;
-    private Stage primaryStage;
-   // private RegisterPage registerPage;
+    private RegisterPage registerPage;
 
     public MainScene(Pane rootPane, int width, int height) {
         super(rootPane, width, height);
@@ -35,9 +31,8 @@ public class MainScene extends Scene {
         this.rootPane.getChildren().add(this.loginPage);
         this.choosePage = new ChoosePage();
         this.roomPage = new RoomPage();
-       // this.registerPage = new RegisterPage();
+        this.registerPage = new RegisterPage();
         configureActions();
-
 
     }
 
@@ -46,7 +41,7 @@ public class MainScene extends Scene {
         setupLoginPageClicked(loginPage.getLoginButton(), loginPage.getEmailTextField(), loginPage.getPasswordField(), loginPage.getRegisterButton());
         setupCreateRoomClicked(choosePage.createRoomButton);
         setupJoinRoomClicked(choosePage.joinRoomButton);
-     //   setUpRegisterButtonClicked(registerPage.registerButton);
+        setUpRegisterButtonClicked(registerPage.registerButton, registerPage.getNameTextField(), registerPage.getEmailTextField(), registerPage.passwordField);
     }
 
     private void setupLoginPageClicked(Button loginButton, TextField emailField, PasswordField passwordField, Button registerButton) {
@@ -92,9 +87,62 @@ public class MainScene extends Scene {
 
         });
         registerButton.setOnAction(e -> {
-            //test
+            rootPane.getChildren().add(registerPage);
+            rootPane.getChildren().remove(loginPage);
         });
+
     }
+
+    private void setUpRegisterButtonClicked(Button registerButton, TextField name, TextField email, TextField password) {
+        registerButton.setOnAction(e -> {
+            JSONObject jsonObj = new JSONObject();
+            jsonObj.put("name", name.getText());
+            jsonObj.put("email", email.getText());
+            jsonObj.put("password", password.getText());
+            HttpClient client = HttpClient.newHttpClient();
+            try {
+                System.out.println("^^^^^^^^^^^^^^^^^^^^^" + jsonObj.toString());
+                HttpRequest request = HttpRequest
+                        .newBuilder()
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonObj.toString()))
+                        .uri(new URI("http://localhost:8081/createUser"))
+                        .build();
+                CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = httpResponseCompletableFuture.get();
+                System.out.println(response);
+                System.out.println(response.body());
+                JSONObject responseFromServer = new JSONObject(response.body());
+                boolean userAdded = (boolean) responseFromServer.get("userAdded");
+                if (userAdded) {
+                    rootPane.getChildren().add(loginPage);
+                    rootPane.getChildren().remove(registerPage);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.initStyle(StageStyle.UTILITY);
+                    alert.setTitle("Success");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Success: you are now added to Co-board: " + name);
+                    alert.showAndWait();
+                    //go to the next room
+
+                } else {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.initStyle(StageStyle.UTILITY);
+                    alert.setTitle("Error");
+                    alert.setHeaderText(null);
+                    alert.setContentText("la dude");
+                    alert.showAndWait();
+
+                }
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            } catch (ExecutionException executionException) {
+                executionException.printStackTrace();
+            } catch (URISyntaxException uriSyntaxException) {
+                uriSyntaxException.printStackTrace();
+            }
+
+    });
+}
 
     private void setupCreateRoomClicked(Button button) {
         button.setOnAction(e -> {
@@ -114,7 +162,16 @@ public class MainScene extends Scene {
                 roomPage.setRoomId(roomId);
                 rootPane.getChildren().add(roomPage);
                 rootPane.getChildren().remove(choosePage);
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.initStyle(StageStyle.UTILITY);
+                alert.setTitle("Success");
+                alert.setHeaderText(null);
+                alert.setContentText("Successfully connected to room : " + roomId);
+                alert.showAndWait();
                 roomPage.waitForChanges(roomId);
+                roomPage.waitForMessages(roomId);
+
+                //TODO implement roomPage.waitForMessages
             } catch (InterruptedException interruptedException) {
                 interruptedException.printStackTrace();
             } catch (ExecutionException executionException) {
@@ -126,11 +183,6 @@ public class MainScene extends Scene {
 
     }
 
-//    private void setUpRegisterButtonClicked(Button registerButton) {
-//        registerButton.setOnAction(e -> {
-//        });
-//
-//    }
 
     private void setupJoinRoomClicked(Button joinButton) {
         joinButton.setOnAction((e -> {
@@ -165,8 +217,7 @@ public class MainScene extends Scene {
                 rootPane.getChildren().add(roomPage);
                 rootPane.getChildren().remove(choosePage);
                 roomPage.waitForChanges(roomId);
-
-
+                roomPage.waitForMessages(roomId);
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.initStyle(StageStyle.UTILITY);
@@ -192,7 +243,6 @@ public class MainScene extends Scene {
         } catch (URISyntaxException uriSyntaxException) {
             uriSyntaxException.printStackTrace();
         }
-
     }
 
 }

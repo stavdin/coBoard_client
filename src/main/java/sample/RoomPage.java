@@ -17,7 +17,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.awt.*;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -43,11 +42,12 @@ public class RoomPage extends GridPane {
     private String owner;
     private CheckBox fillShape;
     private boolean fill;
-    public static int roomPageInt = 6;
+    private ChatBox chatbox;
+
 
     public RoomPage() {
-//        this.setPadding(new Insets(115,115, 115, 133)); //center
-        this.setPadding(new Insets(0,115, 115, 133)); //top
+        this.setPadding(new Insets(0, 115, 200, 133)); //center
+        //this.setPadding(new Insets(0, 115, 115, 133)); //top
         this.setAlignment(Pos.TOP_LEFT);
         this.setHgap(10);
         this.setVgap(10);
@@ -61,13 +61,36 @@ public class RoomPage extends GridPane {
         configureChooseColor();
         configureFillButton();
         configureWhiteBoard();
-
+        configureChatbox();
 
     }
 
 
+    private void configureChatbox() {
+        chatbox = new ChatBox();
+        this.add(chatbox, 1, 2);
+    }
+
+    public void waitForMessages(String roomId) {
+        chatbox.setRoomId(roomId);
+        MessageRetrieverService messageRetrieverService = new MessageRetrieverService(roomId);
+        messageRetrieverService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            @Override
+            public void handle(WorkerStateEvent t) {
+                String message = messageRetrieverService.getValue();
+                String sender = message.substring(0, message.indexOf(':'));
+                if (!owner.equals(sender)) {
+                    chatbox.addMessage(new MessageText(messageRetrieverService.getValue()));
+                }
+
+                messageRetrieverService.restart();
+            }
+        });
+        messageRetrieverService.start();
+
+    }
+
     private void configureToolBar() {
-        //tool bar should be positioned at the top of the page
         toolBar = new GridPane();
         toolBar.setAlignment(Pos.TOP_RIGHT);
         toolBar.setHgap(25);
@@ -93,7 +116,6 @@ public class RoomPage extends GridPane {
 
     private void configureUndoAndRedo() {
         undo = new Button("undo");
-        toolBar.add(undo, 0, 0);
         undo.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
@@ -109,21 +131,36 @@ public class RoomPage extends GridPane {
                             .uri(new URI("http://localhost:8081/undo?roomId=" + roomId + "&owner=" + owner))
                             .build();
                     CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-                    HttpResponse<String> response = httpResponseCompletableFuture.get();
-                    System.out.println("undo operation returned new syncpoint:");
-                    System.out.println(response.body());
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                } catch (ExecutionException executionException) {
-                    executionException.printStackTrace();
+                } catch (URISyntaxException uriSyntaxException) {
+                    uriSyntaxException.printStackTrace();
+                }
+            }
+        });
+
+        redo = new Button("redo");
+        redo.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("roomId", roomId);
+                jsonObject.put("owner", owner);
+                HttpClient client = HttpClient.newHttpClient();
+                try {
+                    HttpRequest request = HttpRequest
+                            .newBuilder()
+                            .PUT(HttpRequest.BodyPublishers.ofString(jsonObject.toString()))
+
+                            .uri(new URI("http://localhost:8081/redo?roomId=" + roomId + "&owner=" + owner))
+                            .build();
+                    CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
                 } catch (URISyntaxException uriSyntaxException) {
                     uriSyntaxException.printStackTrace();
                 }
 
             }
         });
-
-        redo = new Button("redo");
+        toolBar.add(undo, 0, 0);
         toolBar.add(redo, 1, 0);
     }
 
@@ -162,13 +199,22 @@ public class RoomPage extends GridPane {
                 chosenShape = "Line";
                 chooseShape.setPrefSize(100, 20);
                 chooseShape.setText("Line");
-
-
             }
         });
+        MenuItem textBox = new MenuItem("TextBox");
+        textBox.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                chosenShape = "TextBox";
+                chooseShape.setPrefSize(100, 20);
+                chooseShape.setText("TextBox");
+            }
+        });
+
         chooseShape.getItems().add(rectangle);
         chooseShape.getItems().add(circle);
         chooseShape.getItems().add(line);
+        chooseShape.getItems().add(textBox);
 
     }
 
@@ -184,8 +230,6 @@ public class RoomPage extends GridPane {
         whiteBoard = new Pane();
         whiteBoard.setMaxSize(500, 500);
         whiteBoard.setMinSize(500, 500);
-
-
         //set size
         // create a background fill
         BackgroundFill background_fill = new BackgroundFill(Color.WHITE,
@@ -194,7 +238,6 @@ public class RoomPage extends GridPane {
         whiteBoard.setBackground(new Background(background_fill));
         whiteBoard.setBorder(new Border(new BorderStroke(Color.BLACK,
                 BorderStrokeStyle.SOLID, CornerRadii.EMPTY, BorderWidths.DEFAULT)));        //make sure min size works
-        //whiteboard should be positioned at the bottom
         whiteBoard.setOnMousePressed(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
@@ -225,8 +268,10 @@ public class RoomPage extends GridPane {
 
         whiteBoard.setOnMouseReleased(new EventHandler<MouseEvent>() {
             @Override
+            // add pop up when release textbox
             public void handle(MouseEvent mouseEvent) {
                 whiteBoard.getChildren().remove(newShape);
+
                 sendCreateShapeRequest(newShape);
             }
         });
@@ -292,6 +337,7 @@ public class RoomPage extends GridPane {
 
     public void setOwner(String owner) {
         this.owner = owner;
+        chatbox.setOwner(owner);
     }
 
 
@@ -301,18 +347,18 @@ public class RoomPage extends GridPane {
         shapeRetrieverService.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
             @Override
             public void handle(WorkerStateEvent t) {
-                drawReturnedShapes(shapeRetrieverService.getValue(), shapeRetrieverService.isUndo);
+                drawReturnedShapes(shapeRetrieverService.getValue(), shapeRetrieverService.isUndoOrRedo);
                 shapeRetrieverService.restart();
             }
         });
         shapeRetrieverService.start();
     }
 
-    private void drawReturnedShapes(JSONArray shapesToDrawJson, boolean isUndo) {
+    private void drawReturnedShapes(JSONArray shapesToDrawJson, boolean isUndoOrRedo) {
         //deserialize JSONArray
         ArrayList<WhiteboardShape> shapesToDraw = new ArrayList<>(); //all of the shapes that we need to draw - some of which belong to other users.
-        if (isUndo) {
-            //on undo - we re draw everything
+        if (isUndoOrRedo) {
+            //on undo or redo - we re draw everything
             whiteBoard.getChildren().clear();
         }
 
@@ -358,6 +404,9 @@ public class RoomPage extends GridPane {
             case "Line":
                 newShape = new WhiteboardLine();
                 break;
+            case "TextBox":
+                newShape = new WhiteboardTextbox();
+                break;
             default:
                 throw new RuntimeException("Unrecognized shape.");
         }
@@ -370,22 +419,12 @@ public class RoomPage extends GridPane {
 }
 
 
-//TODO STAV NEW :
-// 2. (IMPORTANT) circle implementation change - the center of the circle is the middle point between the first and second click, this way we can easily calculate the radius and we will not draw over the whiteboard.
-// 3. (WHEN YOU HAVE TIME)user registration
-// 4. (LAST)unit test every single servlet - unit test formatting, etc.
-// 5. (LAST)GUI unit tests -  unit test classes if needed
-// 6. Textbox with pop - up +column text in shapes.- not fill.
-// 7. (IMPORTANT )sizes - there are several issues we need to address: - done
-//A. we need to fix the size of every single page - login/choose or create room/ actual room. - done
-// B. We need to increase the size of the room page so we can fit in a chat there. - done
-// C . We need to have the same "buffer" length from the left and from the right of the actual whiteboard. - done
-// D. Toolbar and whiteboard need to be symmetric - they both need to start and end in the same spot. - done
+//TODO:
+// 1. (LAST) circle implementation change - the center of the circle is the middle point between the first and second click, this way we can easily calculate the radius and we will not draw over the whiteboard.
+// 2. (LAST)unit test every single servlet - unit test formatting, etc.
+// 3. (IMPORTANT)Textbox with pop - up in shapes.- not fill.
+// 4. whenever we get a request in our servlets we check the validity of the parameters passed to us - either in body or url.
+// for that we use validation and format checks - should be in app globals.
+// ensure every argument we receive (body/url) is checked. if some are not - add validity check.
+// for example - syncpoint cannot be negative, string cant be null or include special characters. password should...1
 
-//TODO AMIT :
-// 3. ensure circle is drawn correctly when method drawReturnedShapes is called - after circle implementation changes
-// 4. undo/redo - undo is pretty much done
-// 5. textbox - shape
-// 6. chat
-// 7. think of a way for a user to be able to choose a room - how should a user know what the room id is..
-//

@@ -37,7 +37,7 @@ public class LoginPage extends GridPane {
         this.setVgap(10);
         this.setMinSize(400, 500);
         this.setMaxSize(400, 500);
-        this.setMargin(this, new Insets(5, 5, 5, 200));
+        setMargin(this, new Insets(5, 5, 5, 200));
         Label text = new Label("Login");
         text.setPadding(new Insets(80, 0, 60, 0));
         text.setFont(Font.font("Arial Rounded MT Bold", FontWeight.BOLD, 70));

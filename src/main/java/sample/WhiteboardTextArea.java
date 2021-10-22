@@ -1,7 +1,11 @@
 package sample;
 
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 
 import java.awt.*;
 
@@ -9,6 +13,15 @@ public class WhiteboardTextbox extends Rectangle implements WhiteboardShape {
 
     private Point first;
     private Point second;
+
+    public WhiteboardTextbox(TextArea textArea) {
+        return;
+    }
+
+    public WhiteboardTextbox() {
+        return;
+    }
+
 
     @Override
     public void setParameters(Point firstPoint, double x, double y) {
@@ -18,13 +31,15 @@ public class WhiteboardTextbox extends Rectangle implements WhiteboardShape {
 
         setX(firstPoint.getX());
         setY(firstPoint.getY());
-
         setWidth(x - this.getX());
         setHeight(y - this.getY());
         setArcHeight(20.0);
         setArcWidth(30.0);
+        setFill(Color.TRANSPARENT);
 
     }
+
+
 
     @Override
     public Point getFirstPoint() {

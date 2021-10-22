@@ -9,6 +9,7 @@ import java.awt.*;
 public class WhiteboardCircle extends Circle implements WhiteboardShape {
     private Point first;
     private Point second;
+    private final int sizeOfPanel=500;
 
     @Override
     public void setParameters(Point firstPoint, double x, double y) {
@@ -18,18 +19,15 @@ public class WhiteboardCircle extends Circle implements WhiteboardShape {
 
         setCenterX((firstPoint.getX() + second.getX()) / 2);
         setCenterY((firstPoint.getY() + second.getY()) / 2);
-
+        Double diffFromUp = getCenterY();
+        Double diffFromRight = getCenterX();
+        Double diffFromLeft=  sizeOfPanel- diffFromRight;
+        Double diffFromDown= sizeOfPanel-diffFromUp;
+        Double maxRadius = Math.min(diffFromDown,Math.min(diffFromLeft,Math.min(diffFromRight,diffFromUp)));
         Double radius = Math.sqrt(Math.pow(firstPoint.getX() - getCenterX(), 2) + Math.pow(firstPoint.getY() - getCenterY(), 2));
-        if (getCenterX() + radius <= 600 && getCenterY() + radius <= 600 && (getCenterX() - radius) >= 0) {
-            setRadius(radius);
-        } else {
-            if (getCenterX() + radius > 600) {
-                setRadius(radius - (getCenterX() + radius - 600));
-            }
-            if (getCenterY() + radius > 600) {
-               // setRadius(radius - (getCenterY() + radius - 600));
-
-            }
+        setRadius(radius);
+        if(radius > maxRadius){
+            setRadius (maxRadius);
         }
 
     }
@@ -53,5 +51,6 @@ public class WhiteboardCircle extends Circle implements WhiteboardShape {
     public void whiteboardSetStroke(Color c) {
         this.setStroke(c);
     }
+
 
 }

@@ -8,11 +8,14 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextArea;
+import javafx.scene.input.InputMethodEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.geometry.Insets;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
+import javafx.scene.text.Text;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -23,6 +26,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -43,6 +47,7 @@ public class RoomPage extends GridPane {
     private CheckBox fillShape;
     private boolean fill;
     private ChatBox chatbox;
+    private TextArea textFromUser = new TextArea();
 
 
     public RoomPage() {
@@ -268,14 +273,32 @@ public class RoomPage extends GridPane {
 
         whiteBoard.setOnMouseReleased(new EventHandler<MouseEvent>() {
             @Override
-            // add pop up when release textbox
-            public void handle(MouseEvent mouseEvent) {
-                whiteBoard.getChildren().remove(newShape);
 
-                sendCreateShapeRequest(newShape);
+            public void handle(MouseEvent mouseEvent) {
+                if (newShape != null) {
+
+                    if (newShape instanceof WhiteboardTextArea) {
+
+                        whiteBoard.getChildren().add(((WhiteboardTextArea) newShape).getTextArea());
+                        ((WhiteboardTextArea) newShape).setOnInputMethodTextChanged(new EventHandler<InputMethodEvent>() {
+                            @Override
+                            public void handle(InputMethodEvent inputMethodEvent) {
+                                System.out.println(((WhiteboardTextArea) newShape).getTextArea().getText());
+                            }
+                        });
+
+                        textFromUser.setText(((WhiteboardTextArea) newShape).getTextArea().getText());
+
+
+                    }
+
+                    whiteBoard.getChildren().remove(newShape);
+                    sendCreateShapeRequest(newShape);
+                }
             }
         });
         this.add(whiteBoard, 1, 1);
+
 
     }
 
@@ -293,32 +316,38 @@ public class RoomPage extends GridPane {
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("owner", owner);
         jsonObj.put("shapeType", chosenShape);
-        jsonObj.put("firstPointX", shape.getFirstPoint().getX());
-        jsonObj.put("firstPointY", shape.getFirstPoint().getY());
-        jsonObj.put("secondPointX", shape.getSecondPoint().getX());
-        jsonObj.put("secondPointY", shape.getSecondPoint().getY());
-        jsonObj.put("colorR", c.getRed());
-        jsonObj.put("colorB", c.getBlue());
-        jsonObj.put("colorG", c.getGreen());
-        jsonObj.put("fill", fillShape.isSelected());
-        jsonObj.put("roomId", roomId);
-        jsonObj.put("enabled", true);
-
-        // TODO change servlet string
-
-        HttpClient client = HttpClient.newHttpClient();
         try {
-            HttpRequest request = HttpRequest
-                    .newBuilder()
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonObj.toString()))
+            jsonObj.put("firstPointX", shape.getFirstPoint().getX());
+            jsonObj.put("firstPointY", shape.getFirstPoint().getY());
+            jsonObj.put("secondPointX", shape.getSecondPoint().getX());
+            jsonObj.put("secondPointY", shape.getSecondPoint().getY());
+            jsonObj.put("colorR", c.getRed());
+            jsonObj.put("colorB", c.getBlue());
+            jsonObj.put("colorG", c.getGreen());
+            jsonObj.put("fill", fillShape.isSelected());
+            jsonObj.put("roomId", roomId);
+            jsonObj.put("enabled", true);
+            String text = textFromUser.getText();
+            if (chosenShape != "textBox") {
+                text = "";
+            }
+            jsonObj.put("text", text);
 
-                    .uri(new URI("http://localhost:8081/shape"))
-                    .build();
-            CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            HttpResponse<String> response = httpResponseCompletableFuture.get();
-            System.out.println(response);
-            System.out.println(response.body());
-            JSONObject responseJsonObject = new JSONObject(response.body());
+            // TODO change servlet string
+
+            HttpClient client = HttpClient.newHttpClient();
+            try {
+                HttpRequest request = HttpRequest
+                        .newBuilder()
+                        .POST(HttpRequest.BodyPublishers.ofString(jsonObj.toString()))
+
+                        .uri(new URI("http://localhost:8081/shape"))
+                        .build();
+                CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = httpResponseCompletableFuture.get();
+                System.out.println(response);
+                System.out.println(response.body());
+                JSONObject responseJsonObject = new JSONObject(response.body());
 //            if ((boolean) responseJsonObject.get("shapeAdded")) {
 //                shapeList.add(shape);
 //            } else {
@@ -326,12 +355,15 @@ public class RoomPage extends GridPane {
 //                System.out.println("Error");
 //                throw new RuntimeException("Shape not added");
 //            }
-        } catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
-        } catch (ExecutionException executionException) {
-            executionException.printStackTrace();
-        } catch (URISyntaxException uriSyntaxException) {
-            uriSyntaxException.printStackTrace();
+            } catch (InterruptedException interruptedException) {
+                interruptedException.printStackTrace();
+            } catch (ExecutionException executionException) {
+                executionException.printStackTrace();
+            } catch (URISyntaxException uriSyntaxException) {
+                uriSyntaxException.printStackTrace();
+            }
+        } catch (Exception e) {
+            System.out.println("Error: missing points");
         }
     }
 
@@ -361,7 +393,6 @@ public class RoomPage extends GridPane {
             //on undo or redo - we re draw everything
             whiteBoard.getChildren().clear();
         }
-
         for (int i = 0; i < shapesToDrawJson.length(); i++) {
             var shapeJson = (JSONObject) shapesToDrawJson.get(i);
             firstPoint.setLocation(shapeJson.getDouble("firstPointX"), shapeJson.getDouble("firstPointY"));
@@ -371,7 +402,7 @@ public class RoomPage extends GridPane {
             double r = shapeJson.getDouble("colorR");
             double g = shapeJson.getDouble("colorG");
             double b = shapeJson.getDouble("colorB");
-
+            String text = shapeJson.getString("text");
             Color c = Color.rgb((int) (r * 255), (int) (g * 255), (int) (b * 255));
             //set up filters such as fill/color etc
             WhiteboardShape shapeToDraw = createShape(shapeJson.getString("shapeType"));
@@ -405,7 +436,7 @@ public class RoomPage extends GridPane {
                 newShape = new WhiteboardLine();
                 break;
             case "TextBox":
-                newShape = new WhiteboardTextbox();
+                newShape = new WhiteboardTextArea();
                 break;
             default:
                 throw new RuntimeException("Unrecognized shape.");
@@ -418,13 +449,8 @@ public class RoomPage extends GridPane {
     }
 }
 
-
 //TODO:
-// 1. (LAST) circle implementation change - the center of the circle is the middle point between the first and second click, this way we can easily calculate the radius and we will not draw over the whiteboard.
 // 2. (LAST)unit test every single servlet - unit test formatting, etc.
-// 3. (IMPORTANT)Textbox with pop - up in shapes.- not fill.
 // 4. whenever we get a request in our servlets we check the validity of the parameters passed to us - either in body or url.
 // for that we use validation and format checks - should be in app globals.
-// ensure every argument we receive (body/url) is checked. if some are not - add validity check.
-// for example - syncpoint cannot be negative, string cant be null or include special characters. password should...1
-
+// ensure every argument we receive (body/url) is checked. if some are not - add validity check.(syncpoint is not negative,string cannot be null)

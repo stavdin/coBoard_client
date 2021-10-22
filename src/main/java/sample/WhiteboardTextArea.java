@@ -1,25 +1,26 @@
-package sample;
 
-import javafx.scene.control.TextArea;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
+package sample;
 
 import java.awt.*;
 
-public class WhiteboardTextbox extends Rectangle implements WhiteboardShape {
+import javafx.scene.control.TextArea;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
+
+public class WhiteboardTextArea extends Rectangle implements WhiteboardShape {
     private Point first;
     private Point second;
+    private TextArea textArea;
 
-    public WhiteboardTextbox(TextArea textArea) {
-        return;
+
+    public TextArea getTextArea() {
+        return textArea;
+
     }
 
-    public WhiteboardTextbox() {
-        return;
+    public void setTextArea(TextArea textArea) {
+        this.textArea = textArea;
     }
 
 
@@ -28,7 +29,11 @@ public class WhiteboardTextbox extends Rectangle implements WhiteboardShape {
         first = new Point(firstPoint.getLocation());
         second = new Point();
         second.setLocation(x, y);
-
+        this.textArea = new TextArea();
+        textArea.setPrefHeight(y - this.getY() - 3);
+        textArea.setPrefWidth(x - this.getX() - 3);
+        textArea.setLayoutX(firstPoint.getX());
+        textArea.setLayoutY(firstPoint.getY());
         setX(firstPoint.getX());
         setY(firstPoint.getY());
         setWidth(x - this.getX());
@@ -38,7 +43,6 @@ public class WhiteboardTextbox extends Rectangle implements WhiteboardShape {
         setFill(Color.TRANSPARENT);
 
     }
-
 
 
     @Override
@@ -52,12 +56,14 @@ public class WhiteboardTextbox extends Rectangle implements WhiteboardShape {
     }
 
     @Override
-    public void whiteboardSetStroke(Color c) {
+    public void whiteboardSetStroke(javafx.scene.paint.Color c) {
         this.setStroke(c);
+
     }
 
     @Override
-    public void whiteboardSetFill(Color c) {
+    public void whiteboardSetFill(javafx.scene.paint.Color c) {
         this.setFill(c);
+
     }
 }

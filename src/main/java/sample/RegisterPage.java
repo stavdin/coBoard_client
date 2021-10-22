@@ -2,15 +2,12 @@ package sample;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
+
 
 public class RegisterPage extends GridPane {
     public TextField emailTextField;
@@ -23,7 +20,7 @@ public class RegisterPage extends GridPane {
 
     }
 
-    private void setupRegisterPage(){
+    private void setupRegisterPage() {
         this.setAlignment(Pos.CENTER);
         this.setHgap(10);
         this.setVgap(10);
@@ -41,9 +38,9 @@ public class RegisterPage extends GridPane {
         this.add(text, 0, 0, 2, 1);
 
         Label userName = new Label("User Name");
-        this.add(userName,0,1);
+        this.add(userName, 0, 1);
         nameTextField = new TextField();
-        this.add(nameTextField,1,1);
+        this.add(nameTextField, 1, 1);
 
         Label userEmail = new Label("User Email:");
         this.add(userEmail, 0, 2);
@@ -63,18 +60,17 @@ public class RegisterPage extends GridPane {
         registerButton.setMaxSize(90, 40);
         registerButton.setMinSize(90, 40);
         registerButton.setTextFill(Color.GREEN);
-        this.add( registerButton,1,5);
+        this.add(registerButton, 1, 5);
 
 
     }
-
 
 
     public PasswordField getPasswordField() {
         return passwordField;
     }
 
-    public TextField getNameTextField(){
+    public TextField getNameTextField() {
         return nameTextField;
     }
 

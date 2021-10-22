@@ -45,7 +45,6 @@ public class Main extends Application {
         Canvas canvas = new Canvas(800, 800);
         holder.getChildren().add(canvas);
         root.getChildren().add(holder);
-//        holder.setStyle("-fx-background-color: mediumturquoise");
         holder.setStyle("-fx-background-color: radial-gradient(center 50% 50%, radius 50%, rgb(104, 163, 193) 0%, rgb(23, 56, 99) 100%);");
 
         MainScene scene = new MainScene(root,800,800);

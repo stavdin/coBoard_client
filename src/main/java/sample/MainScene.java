@@ -96,53 +96,64 @@ public class MainScene extends Scene {
     private void setUpRegisterButtonClicked(Button registerButton, TextField name, TextField email, TextField password) {
         registerButton.setOnAction(e -> {
             JSONObject jsonObj = new JSONObject();
-            jsonObj.put("name", name.getText());
-            jsonObj.put("email", email.getText());
-            jsonObj.put("password", password.getText());
-            HttpClient client = HttpClient.newHttpClient();
-            try {
-                System.out.println("^^^^^^^^^^^^^^^^^^^^^" + jsonObj.toString());
-                HttpRequest request = HttpRequest
-                        .newBuilder()
-                        .POST(HttpRequest.BodyPublishers.ofString(jsonObj.toString()))
-                        .uri(new URI("http://localhost:8081/createUser"))
-                        .build();
-                CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-                HttpResponse<String> response = httpResponseCompletableFuture.get();
-                System.out.println(response);
-                System.out.println(response.body());
-                JSONObject responseFromServer = new JSONObject(response.body());
-                boolean userAdded = (boolean) responseFromServer.get("userAdded");
-                if (userAdded) {
-                    rootPane.getChildren().add(loginPage);
-                    rootPane.getChildren().remove(registerPage);
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.initStyle(StageStyle.UTILITY);
-                    alert.setTitle("Success");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Success: you are now added to Co-board: " + name);
-                    alert.showAndWait();
-                    //go to the next room
+                if(name.getText()!= ""&&email.getText()!=""&& password.getText()!="") {
+                    jsonObj.put("name", name.getText());
+                    jsonObj.put("email", email.getText());
+                    jsonObj.put("password", password.getText());
 
-                } else {
+                    HttpClient client = HttpClient.newHttpClient();
+                    try {
+                        HttpRequest request = HttpRequest
+                                .newBuilder()
+                                .POST(HttpRequest.BodyPublishers.ofString(jsonObj.toString()))
+                                .uri(new URI("http://localhost:8081/createUser"))
+                                .build();
+                        CompletableFuture<HttpResponse<String>> httpResponseCompletableFuture = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+                        HttpResponse<String> response = httpResponseCompletableFuture.get();
+                        System.out.println(response);
+                        System.out.println(response.body());
+                        JSONObject responseFromServer = new JSONObject(response.body());
+                        boolean userAdded = (boolean) responseFromServer.get("userAdded");
+                        if (userAdded) {
+                            rootPane.getChildren().add(loginPage);
+                            rootPane.getChildren().remove(registerPage);
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.initStyle(StageStyle.UTILITY);
+                            alert.setTitle("Success");
+                            alert.setHeaderText(null);
+                            alert.setContentText("Success: you are now added to Co-board: " + name);
+                            alert.showAndWait();
+                            //go to the next room
+
+                        } else {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.initStyle(StageStyle.UTILITY);
+                            alert.setTitle("Error");
+                            alert.setHeaderText(null);
+                            alert.setContentText("la dude");
+                            alert.showAndWait();
+
+                        }
+
+                    } catch (InterruptedException interruptedException) {
+                        interruptedException.printStackTrace();
+                    } catch (ExecutionException executionException) {
+                        executionException.printStackTrace();
+                    } catch (URISyntaxException uriSyntaxException) {
+                        uriSyntaxException.printStackTrace();
+                    }
+                }
+                else{
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.initStyle(StageStyle.UTILITY);
                     alert.setTitle("Error");
                     alert.setHeaderText(null);
-                    alert.setContentText("la dude");
+                    alert.setContentText("Error:please fill all the ");
                     alert.showAndWait();
-
                 }
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            } catch (ExecutionException executionException) {
-                executionException.printStackTrace();
-            } catch (URISyntaxException uriSyntaxException) {
-                uriSyntaxException.printStackTrace();
-            }
+        });
+    }
 
-    });
-}
 
     private void setupCreateRoomClicked(Button button) {
         button.setOnAction(e -> {
@@ -171,7 +182,6 @@ public class MainScene extends Scene {
                 roomPage.waitForChanges(roomId);
                 roomPage.waitForMessages(roomId);
 
-                //TODO implement roomPage.waitForMessages
             } catch (InterruptedException interruptedException) {
                 interruptedException.printStackTrace();
             } catch (ExecutionException executionException) {
